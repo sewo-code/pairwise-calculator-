@@ -1,0 +1,651 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Pairwise Test Calculator</title>
+<style>
+  :root {
+    --blue:#2563eb; --blue-d:#1d4ed8; --blue-light:#eff6ff;
+    --green:#16a34a; --green-light:#f0fdf4;
+    --red:#dc2626; --gray:#6b7280;
+    --border:#e5e7eb; --bg:#f9fafb;
+  }
+  *{box-sizing:border-box;margin:0;padding:0;}
+  body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;
+       background:var(--bg);color:#111827;min-height:100vh;}
+
+  /* ── HEADER ── */
+  header{background:var(--blue);color:white;padding:16px 24px;
+         display:flex;align-items:center;justify-content:space-between;gap:12px;}
+  .header-left h1{font-size:1.2rem;font-weight:700;display:flex;align-items:center;gap:8px;}
+  .header-left p{font-size:0.82rem;opacity:0.85;margin-top:3px;}
+
+  /* Language toggle */
+  .lang-switch{display:flex;background:rgba(255,255,255,0.15);border-radius:8px;overflow:hidden;flex-shrink:0;}
+  .lang-btn{padding:7px 14px;border:none;background:none;color:white;cursor:pointer;
+            font-size:0.85rem;font-weight:600;opacity:0.65;transition:all .15s;}
+  .lang-btn.active{background:rgba(255,255,255,0.25);opacity:1;}
+  .lang-btn:hover:not(.active){opacity:0.9;}
+
+  /* ── LAYOUT ── */
+  .container{max-width:1120px;margin:0 auto;padding:24px 20px;}
+  .layout{display:grid;grid-template-columns:380px 1fr;gap:24px;align-items:start;}
+  @media(max-width:820px){.layout{grid-template-columns:1fr;}}
+
+  /* ── CARD ── */
+  .card{background:white;border:1px solid var(--border);border-radius:12px;padding:20px;}
+  .card-title{font-size:0.78rem;font-weight:700;color:#9ca3af;text-transform:uppercase;
+              letter-spacing:.07em;margin-bottom:14px;}
+
+  /* ── PRESETS ── */
+  .presets{display:flex;flex-direction:column;gap:6px;margin-bottom:0;}
+  .preset-btn{padding:9px 12px;border:1px solid var(--border);border-radius:8px;
+              background:white;font-size:0.84rem;cursor:pointer;text-align:left;
+              color:#374151;transition:all .15s;display:flex;justify-content:space-between;align-items:center;}
+  .preset-btn:hover{background:var(--blue-light);border-color:var(--blue);color:var(--blue);}
+  .preset-name{font-weight:600;}
+  .preset-size{font-size:0.75rem;color:var(--gray);}
+
+  /* ── PARAMS ── */
+  .param-row{border:1px solid var(--border);border-radius:8px;padding:12px;background:#fafafa;margin-bottom:10px;}
+  .param-row-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;}
+  .param-num{font-weight:700;font-size:0.85rem;color:var(--blue);}
+  .del-btn{background:none;border:none;cursor:pointer;color:#d1d5db;font-size:1rem;
+           padding:2px 7px;border-radius:4px;transition:all .15s;}
+  .del-btn:hover{color:var(--red);background:#fee2e2;}
+  label{font-size:0.78rem;color:var(--gray);display:block;margin-bottom:4px;}
+  input[type=text]{width:100%;border:1px solid var(--border);border-radius:6px;
+                   padding:8px 10px;font-size:0.88rem;outline:none;background:white;}
+  input[type=text]:focus{border-color:var(--blue);box-shadow:0 0 0 3px rgba(37,99,235,.1);}
+  .field-gap{margin-bottom:8px;}
+
+  .add-btn{width:100%;padding:10px;border:2px dashed var(--border);
+           background:none;border-radius:8px;cursor:pointer;color:var(--gray);
+           font-size:0.86rem;transition:all .15s;margin-bottom:12px;}
+  .add-btn:hover{border-color:var(--blue);color:var(--blue);background:var(--blue-light);}
+
+  .gen-btn{width:100%;padding:13px;background:var(--blue);color:white;border:none;
+           border-radius:8px;font-size:0.95rem;font-weight:700;cursor:pointer;transition:background .15s;}
+  .gen-btn:hover{background:var(--blue-d);}
+  .gen-btn:disabled{background:#93c5fd;cursor:not-allowed;}
+
+  /* ── STATS BAR ── */
+  #stats-bar{display:none;background:var(--green-light);border:1px solid #bbf7d0;
+             border-radius:10px;padding:14px 20px;margin-bottom:16px;
+             gap:20px;flex-wrap:wrap;align-items:center;}
+  #stats-bar.visible{display:flex;}
+  .stat{text-align:center;}
+  .stat-val{font-size:1.4rem;font-weight:800;color:var(--green);}
+  .stat-lbl{font-size:0.72rem;color:var(--gray);margin-top:1px;}
+  .divider{width:1px;height:36px;background:#bbf7d0;}
+  .saving-badge{margin-left:auto;background:var(--green);color:white;
+                padding:7px 16px;border-radius:20px;font-weight:800;font-size:0.92rem;}
+
+  /* ── RESULTS ── */
+  #result-area{display:none;}
+  #result-area.visible{display:block;}
+  .table-actions{display:flex;gap:8px;margin-bottom:12px;flex-wrap:wrap;}
+  .act-btn{padding:7px 13px;border-radius:6px;border:1px solid var(--border);
+           background:white;font-size:0.81rem;cursor:pointer;font-weight:600;transition:all .15s;}
+  .act-btn:hover{background:var(--blue-light);border-color:var(--blue);color:var(--blue);}
+  .act-btn.primary{background:var(--blue);color:white;border-color:var(--blue);}
+  .act-btn.primary:hover{background:var(--blue-d);}
+
+  .table-wrap{overflow-x:auto;border-radius:8px;border:1px solid var(--border);}
+  table{width:100%;border-collapse:collapse;font-size:0.85rem;}
+  thead th{background:#f3f4f6;padding:10px 12px;text-align:left;font-weight:700;
+           color:#374151;border-bottom:1px solid var(--border);white-space:nowrap;}
+  thead th:first-child{color:var(--gray);width:40px;text-align:center;}
+  tbody tr:nth-child(even){background:#f9fafb;}
+  tbody tr:hover{background:var(--blue-light);}
+  tbody td{padding:8px 12px;border-bottom:1px solid #f3f4f6;}
+  tbody td:first-child{text-align:center;color:var(--gray);font-size:0.78rem;}
+  tbody tr:last-child td{border-bottom:none;}
+
+  /* ── VERIFY ── */
+  #verify-box{margin-top:14px;padding:14px 16px;border-radius:8px;
+              border:1px solid var(--border);background:#fafafa;font-size:0.84rem;line-height:1.7;}
+
+  /* ── EMPTY ── */
+  #empty-state{text-align:center;padding:52px 24px;color:var(--gray);}
+  .empty-icon{font-size:3rem;margin-bottom:14px;}
+  #empty-state p{font-size:0.88rem;line-height:1.7;}
+
+  /* ── TOAST ── */
+  .toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%);
+         background:#1f2937;color:white;padding:10px 22px;border-radius:8px;
+         font-size:0.86rem;z-index:9999;pointer-events:none;
+         animation:fadeup .2s ease;}
+  @keyframes fadeup{from{opacity:0;transform:translateX(-50%) translateY(8px)}to{opacity:1;transform:translateX(-50%) translateY(0)}}
+
+  /* ── HOW IT WORKS ── */
+  .how-card{margin-top:16px;}
+  .how-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:10px;}
+  @media(max-width:500px){.how-grid{grid-template-columns:1fr;}}
+  .how-item{background:#f8fafc;border:1px solid var(--border);border-radius:8px;padding:12px;}
+  .how-num{font-size:1.1rem;margin-bottom:4px;}
+  .how-title{font-weight:700;font-size:0.84rem;color:#374151;margin-bottom:3px;}
+  .how-desc{font-size:0.78rem;color:var(--gray);line-height:1.5;}
+
+  footer{text-align:center;padding:24px;font-size:0.78rem;color:#9ca3af;margin-top:8px;}
+  footer a{color:var(--blue);text-decoration:none;}
+  footer a:hover{text-decoration:underline;}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="header-left">
+    <h1>⚡ Pairwise Test Calculator</h1>
+    <p id="hdr-sub">Generate minimum test cases covering all parameter pairs</p>
+  </div>
+  <div class="lang-switch">
+    <button class="lang-btn active" onclick="setLang('en')" id="btn-en">EN</button>
+    <button class="lang-btn" onclick="setLang('tr')" id="btn-tr">TR</button>
+  </div>
+</header>
+
+<div class="container">
+  <div class="layout">
+
+    <!-- ── LEFT PANEL ── -->
+    <div>
+      <div class="card" style="margin-bottom:16px">
+        <div class="card-title" id="lbl-presets">🚀 Quick Start Examples</div>
+        <div class="presets" id="presets-list"></div>
+      </div>
+
+      <div class="card">
+        <div class="card-title" id="lbl-params">⚙️ Parameters</div>
+        <div id="params-list"></div>
+        <button class="add-btn" onclick="addParam()" id="btn-add">+ Add Parameter</button>
+        <button class="gen-btn" onclick="generate()" id="btn-gen">Calculate Pairwise →</button>
+      </div>
+
+      <div class="card how-card">
+        <div class="card-title" id="lbl-how">💡 How It Works</div>
+        <div class="how-grid" id="how-grid"></div>
+      </div>
+    </div>
+
+    <!-- ── RIGHT PANEL ── -->
+    <div>
+      <div id="stats-bar">
+        <div class="stat">
+          <div class="stat-val" id="st-exhaustive">—</div>
+          <div class="stat-lbl" id="lbl-exhaustive">Exhaustive</div>
+        </div>
+        <div class="divider"></div>
+        <div class="stat">
+          <div class="stat-val" id="st-pairwise">—</div>
+          <div class="stat-lbl" id="lbl-pairwise">Pairwise</div>
+        </div>
+        <div class="divider"></div>
+        <div class="stat">
+          <div class="stat-val" id="st-pairs">—</div>
+          <div class="stat-lbl" id="lbl-pairs">Pairs Covered</div>
+        </div>
+        <div class="saving-badge" id="st-saving">0% Saved</div>
+      </div>
+
+      <div id="result-area">
+        <div class="table-actions">
+          <button class="act-btn primary" onclick="exportCSV()" id="btn-csv">📥 Download CSV</button>
+          <button class="act-btn" onclick="copyTable()" id="btn-copy">📋 Copy (Excel)</button>
+          <button class="act-btn" onclick="exportPICT()" id="btn-pict">📄 PICT .model</button>
+        </div>
+        <div class="table-wrap">
+          <table>
+            <thead id="result-thead"></thead>
+            <tbody id="result-tbody"></tbody>
+          </table>
+        </div>
+        <div id="verify-box"></div>
+      </div>
+
+      <div id="empty-state" class="card">
+        <div class="empty-icon">🎯</div>
+        <p id="empty-txt">
+          Enter your parameters on the left<br>
+          and click <strong>"Calculate Pairwise"</strong>.<br><br>
+          <span style="font-size:0.8rem">Or pick a ready example above.</span>
+        </p>
+      </div>
+    </div>
+  </div>
+</div>
+
+<footer>
+  <span id="footer-txt">Based on Kuhn et al. (2004) — ~85% of software faults involve at most 2-parameter interactions.</span><br>
+  <span style="margin-top:4px;display:block">
+    <a href="https://github.com/microsoft/pict" target="_blank">Microsoft PICT</a> ·
+    <a href="https://ieeexplore.ieee.org/document/1353671" target="_blank">Kuhn et al. 2004</a>
+  </span>
+</footer>
+
+<script>
+// ══════════════════════════════════════════════════════
+//  TRANSLATIONS
+// ══════════════════════════════════════════════════════
+const I18N = {
+  en: {
+    headerSub:    'Generate minimum test cases covering all parameter pairs',
+    presets:      '🚀 Quick Start Examples',
+    params:       '⚙️ Parameters',
+    addParam:     '+ Add Parameter',
+    genBtn:       'Calculate Pairwise →',
+    genLoading:   'Calculating...',
+    how:          '💡 How It Works',
+    howItems: [
+      { icon:'1️⃣', title:'Add Parameters', desc:'Enter each parameter and its possible values.' },
+      { icon:'2️⃣', title:'Generate',       desc:'Algorithm finds the minimum set covering all value pairs.' },
+      { icon:'3️⃣', title:'Export',         desc:'Download CSV or copy directly into Excel/Sheets.' },
+      { icon:'4️⃣', title:'Why it works',   desc:'85% of software faults come from ≤2 parameter interactions (Kuhn et al., 2004).' },
+    ],
+    exhaustive: 'Exhaustive',
+    pairwise:   'Pairwise',
+    pairs:      'Pairs Covered',
+    saving:     (p) => `${p}% Saved`,
+    csvBtn:     '📥 Download CSV',
+    copyBtn:    '📋 Copy (Excel)',
+    pictBtn:    '📄 PICT .model',
+    verifyOk:   (n, ex, pw) => `✅ All ${n} parameter pairs covered. ${ex} exhaustive → ${pw} test cases.`,
+    verifyFail: (m) => `⚠️ Missing pairs: ${m}`,
+    emptyTxt:   `Enter your parameters on the left<br>and click <strong>"Calculate Pairwise"</strong>.<br><br><span style="font-size:.8rem">Or pick a ready example above.</span>`,
+    paramLabel: (n) => `Parameter ${n}`,
+    nameLabel:  'Parameter Name',
+    valsLabel:  'Values',
+    valsHint:   '(comma separated)',
+    namePh:     'e.g. Browser, OS, Version...',
+    valsPh:     'e.g. Chrome, Firefox, Safari',
+    errMin2P:   'At least 2 parameters required!',
+    errMin2V:   (k) => `"${k}" must have at least 2 values!`,
+    copied:     'Copied! Paste with Ctrl+V in Excel.',
+    footerTxt:  'Based on Kuhn et al. (2004) — ~85% of software faults involve at most 2-parameter interactions.',
+    presetList: [
+      { key:'chatbot',   name:'AI Chatbot',               size:'5×4×3×2 = 120 exhaustive' },
+      { key:'browser',   name:'Browser × OS × Device',    size:'4×5×3×3 = 180 exhaustive' },
+      { key:'ecommerce', name:'E-commerce Checkout Form', size:'3×4×3×2×3 = 216 exhaustive' },
+      { key:'ml',        name:'ML Model Configuration',   size:'3×4×3×3×3 = 324 exhaustive' },
+    ],
+  },
+  tr: {
+    headerSub:    'Tüm parametre çiftlerini kapsayan minimum test seti üretici',
+    presets:      '🚀 Hazır Örnekler',
+    params:       '⚙️ Parametreler',
+    addParam:     '+ Parametre Ekle',
+    genBtn:       'Pairwise Hesapla →',
+    genLoading:   'Hesaplanıyor...',
+    how:          '💡 Nasıl Çalışır?',
+    howItems: [
+      { icon:'1️⃣', title:'Parametre Gir',   desc:'Her parametreyi ve olası değerlerini ekle.' },
+      { icon:'2️⃣', title:'Hesapla',          desc:'Algoritma tüm değer çiftlerini kapsayan minimum seti bulur.' },
+      { icon:'3️⃣', title:'Dışa Aktar',       desc:'CSV indir ya da doğrudan Excel/Sheets\'e yapıştır.' },
+      { icon:'4️⃣', title:'Neden işe yarar?', desc:'Yazılım hatalarının %85\'i en fazla 2 parametre etkileşiminden kaynaklanır (Kuhn ve ark., 2004).' },
+    ],
+    exhaustive: 'Exhaustive',
+    pairwise:   'Pairwise',
+    pairs:      'Kapsanan Çift',
+    saving:     (p) => `%${p} Azalma`,
+    csvBtn:     '📥 CSV İndir',
+    copyBtn:    '📋 Kopyala (Excel)',
+    pictBtn:    '📄 PICT .model',
+    verifyOk:   (n, ex, pw) => `✅ Tüm ${n} ikili kombinasyon kapsandı. ${ex} exhaustive yerine ${pw} test case.`,
+    verifyFail: (m) => `⚠️ Eksik çiftler: ${m}`,
+    emptyTxt:   `Sol taraftaki parametreleri girin<br>ve <strong>"Pairwise Hesapla"</strong> butonuna tıklayın.<br><br><span style="font-size:.8rem">Ya da hazır örneklerden birini seçin.</span>`,
+    paramLabel: (n) => `Parametre ${n}`,
+    nameLabel:  'Parametre Adı',
+    valsLabel:  'Değerler',
+    valsHint:   '(virgülle ayırın)',
+    namePh:     'örn: Browser, OS, Sürüm...',
+    valsPh:     'örn: Chrome, Firefox, Safari',
+    errMin2P:   'En az 2 parametre gerekli!',
+    errMin2V:   (k) => `"${k}" parametresinin en az 2 değeri olmalı!`,
+    copied:     'Kopyalandı! Excel\'de Ctrl+V ile yapıştırın.',
+    footerTxt:  'Kuhn ve ark. (2004) temel alınmıştır — yazılım hatalarının ~%85\'i en fazla 2 parametre etkileşiminden kaynaklanır.',
+    presetList: [
+      { key:'chatbot',   name:'AI Chatbot',              size:'5×4×3×2 = 120 exhaustive' },
+      { key:'browser',   name:'Browser × OS × Device',   size:'4×5×3×3 = 180 exhaustive' },
+      { key:'ecommerce', name:'E-ticaret Ödeme Formu',   size:'3×4×3×2×3 = 216 exhaustive' },
+      { key:'ml',        name:'ML Model Konfigürasyonu', size:'3×4×3×3×3 = 324 exhaustive' },
+    ],
+  }
+};
+
+// ══════════════════════════════════════════════════════
+//  PRESETS DATA
+// ══════════════════════════════════════════════════════
+const PRESETS = {
+  chatbot: {
+    'Language_Model':    ['LM1','LM2','LM3','LM4','LM5'],
+    'Response_Tone':     ['Formal','Semi-formal','Casual','Technical'],
+    'Context_Window':    ['2K','4K','8K'],
+    'Safety_Filter':     ['Basic','Advanced'],
+  },
+  browser: {
+    'Browser':  ['Chrome','Firefox','Safari','Edge'],
+    'OS':       ['Windows','macOS','Linux','iOS','Android'],
+    'Device':   ['Desktop','Tablet','Mobile'],
+    'Network':  ['WiFi','4G','Offline'],
+  },
+  ecommerce: {
+    'Payment_Method':  ['Credit Card','Bank Transfer','Crypto'],
+    'Order_Amount':    ['<$10','$10-$100','>$100','Free'],
+    'User_Type':       ['New','Registered','VIP'],
+    'Discount_Code':   ['None','Valid'],
+    'Delivery_Type':   ['Standard','Express','Pick-up'],
+  },
+  ml: {
+    'Learning_Rate': ['0.001','0.01','0.1'],
+    'Batch_Size':    ['16','32','64','128'],
+    'Optimizer':     ['Adam','SGD','RMSprop'],
+    'Dropout':       ['0.0','0.2','0.5'],
+    'Normalization': ['BatchNorm','LayerNorm','None'],
+  }
+};
+
+// ══════════════════════════════════════════════════════
+//  LANGUAGE STATE
+// ══════════════════════════════════════════════════════
+let currentLang = 'en';
+let t = () => I18N[currentLang];
+let paramCount = 0;
+let lastResult = [];
+let lastParams = {};
+
+function setLang(lang) {
+  currentLang = lang;
+  document.getElementById('btn-en').classList.toggle('active', lang === 'en');
+  document.getElementById('btn-tr').classList.toggle('active', lang === 'tr');
+  document.documentElement.lang = lang;
+  renderUI();
+}
+
+function renderUI() {
+  const L = I18N[currentLang];
+
+  document.getElementById('hdr-sub').textContent       = L.headerSub;
+  document.getElementById('lbl-presets').textContent   = L.presets;
+  document.getElementById('lbl-params').textContent    = L.params;
+  document.getElementById('btn-add').textContent       = L.addParam;
+  document.getElementById('btn-gen').textContent       = L.genBtn;
+  document.getElementById('lbl-how').textContent       = L.how;
+  document.getElementById('lbl-exhaustive').textContent= L.exhaustive;
+  document.getElementById('lbl-pairwise').textContent  = L.pairwise;
+  document.getElementById('lbl-pairs').textContent     = L.pairs;
+  document.getElementById('btn-csv').textContent       = L.csvBtn;
+  document.getElementById('btn-copy').textContent      = L.copyBtn;
+  document.getElementById('btn-pict').textContent      = L.pictBtn;
+  document.getElementById('footer-txt').textContent    = L.footerTxt;
+  document.getElementById('empty-txt').innerHTML       = L.emptyTxt;
+
+  // Re-render presets
+  const pl = document.getElementById('presets-list');
+  pl.innerHTML = '';
+  L.presetList.forEach(p => {
+    const btn = document.createElement('button');
+    btn.className = 'preset-btn';
+    btn.onclick = () => loadPreset(p.key);
+    btn.innerHTML = `<span class="preset-name">${p.name}</span><span class="preset-size">${p.size}</span>`;
+    pl.appendChild(btn);
+  });
+
+  // Re-render how-it-works
+  const hg = document.getElementById('how-grid');
+  hg.innerHTML = L.howItems.map(h =>
+    `<div class="how-item"><div class="how-num">${h.icon}</div>
+     <div class="how-title">${h.title}</div>
+     <div class="how-desc">${h.desc}</div></div>`
+  ).join('');
+
+  // Re-label existing param rows
+  document.querySelectorAll('.param-row').forEach(row => {
+    const id = row.id.split('-')[1];
+    const numEl = row.querySelector('.param-num');
+    if (numEl) numEl.textContent = L.paramLabel(id);
+    const labels = row.querySelectorAll('label');
+    if (labels[0]) labels[0].textContent = L.nameLabel;
+    if (labels[1]) labels[1].innerHTML = `${L.valsLabel} <small style="color:#9ca3af">${L.valsHint}</small>`;
+    const inputs = row.querySelectorAll('input');
+    if (inputs[0]) inputs[0].placeholder = L.namePh;
+    if (inputs[1]) inputs[1].placeholder = L.valsPh;
+  });
+
+  // Update saving badge if visible
+  const badge = document.getElementById('st-saving');
+  const pct = badge.dataset.pct;
+  if (pct !== undefined) badge.textContent = L.saving(pct);
+
+  // Update verify box if visible
+  const vb = document.getElementById('verify-box');
+  if (vb.dataset.ok !== undefined && lastResult.length) {
+    if (vb.dataset.ok === 'true') {
+      vb.innerHTML = `<span style="color:var(--green);font-weight:600">${L.verifyOk(vb.dataset.n, vb.dataset.ex, vb.dataset.pw)}</span>`;
+    }
+  }
+}
+
+// ══════════════════════════════════════════════════════
+//  PARAM MANAGEMENT
+// ══════════════════════════════════════════════════════
+function addParam(name='', vals='') {
+  paramCount++;
+  const id = paramCount;
+  const L = I18N[currentLang];
+  const div = document.createElement('div');
+  div.className = 'param-row';
+  div.id = `param-${id}`;
+  div.innerHTML = `
+    <div class="param-row-header">
+      <span class="param-num">${L.paramLabel(id)}</span>
+      <button class="del-btn" onclick="removeParam(${id})" title="Remove">✕</button>
+    </div>
+    <label>${L.nameLabel}</label>
+    <input type="text" id="pname-${id}" placeholder="${L.namePh}" value="${name}" class="field-gap">
+    <label>${L.valsLabel} <small style="color:#9ca3af">${L.valsHint}</small></label>
+    <input type="text" id="pvals-${id}" placeholder="${L.valsPh}" value="${vals}">
+  `;
+  document.getElementById('params-list').appendChild(div);
+}
+
+function removeParam(id) {
+  const el = document.getElementById(`param-${id}`);
+  if (el) el.remove();
+}
+
+function getParams() {
+  const params = {};
+  document.querySelectorAll('.param-row').forEach(row => {
+    const id = row.id.split('-')[1];
+    const name = (document.getElementById(`pname-${id}`)?.value || '').trim();
+    const raw  = (document.getElementById(`pvals-${id}`)?.value || '').trim();
+    if (!name || !raw) return;
+    const vals = raw.split(',').map(v => v.trim()).filter(Boolean);
+    if (vals.length) params[name] = vals;
+  });
+  return params;
+}
+
+// ══════════════════════════════════════════════════════
+//  PRESET LOADER
+// ══════════════════════════════════════════════════════
+function loadPreset(key) {
+  const preset = PRESETS[key];
+  document.getElementById('params-list').innerHTML = '';
+  paramCount = 0;
+  for (const [name, vals] of Object.entries(preset)) {
+    addParam(name, vals.join(', '));
+  }
+}
+
+// ══════════════════════════════════════════════════════
+//  PAIRWISE ALGORITHM  (greedy, JS port)
+// ══════════════════════════════════════════════════════
+function generatePairwise(parameters) {
+  const names  = Object.keys(parameters);
+  const values = Object.values(parameters);
+  const n = names.length;
+
+  const uncovered = new Set();
+  for (let i = 0; i < n; i++)
+    for (let j = i+1; j < n; j++)
+      for (const vi of values[i])
+        for (const vj of values[j])
+          uncovered.add(`${i}|${vi}||${j}|${vj}`);
+
+  const totalPairs = uncovered.size;
+  const testCases  = [];
+
+  let seed = 42;
+  const rand = () => { seed=(seed*1664525+1013904223)&0xffffffff; return (seed>>>0)/0xffffffff; };
+  const pick = arr => arr[Math.floor(rand()*arr.length)];
+
+  while (uncovered.size > 0) {
+    let best = null, bestN = -1;
+    const candidates = [];
+    for (let k = 0; k < 60; k++) {
+      const c = {}; names.forEach((nm,i) => c[nm]=pick(values[i])); candidates.push(c);
+    }
+    for (let i = 0; i < n; i++)
+      for (const v of values[i]) {
+        const c = {}; names.forEach((nm,ii) => c[nm]=pick(values[ii])); c[names[i]]=v; candidates.push(c);
+      }
+
+    for (const cand of candidates) {
+      let cnt = 0;
+      for (let i = 0; i < n; i++)
+        for (let j = i+1; j < n; j++)
+          if (uncovered.has(`${i}|${cand[names[i]]}||${j}|${cand[names[j]]}`)) cnt++;
+      if (cnt > bestN) { bestN = cnt; best = cand; }
+    }
+
+    for (let i = 0; i < n; i++)
+      for (let j = i+1; j < n; j++)
+        uncovered.delete(`${i}|${best[names[i]]}||${j}|${best[names[j]]}`);
+    testCases.push(best);
+  }
+  return { testCases, totalPairs };
+}
+
+function verifyPairwise(testCases, parameters) {
+  const names  = Object.keys(parameters);
+  const values = Object.values(parameters);
+  const n = names.length;
+  const missing = [];
+  for (let i = 0; i < n; i++)
+    for (let j = i+1; j < n; j++)
+      for (const vi of values[i])
+        for (const vj of values[j])
+          if (!testCases.some(tc => tc[names[i]]===vi && tc[names[j]]===vj))
+            missing.push(`${names[i]}=${vi} + ${names[j]}=${vj}`);
+  return missing;
+}
+
+// ══════════════════════════════════════════════════════
+//  GENERATE
+// ══════════════════════════════════════════════════════
+function generate() {
+  const L = I18N[currentLang];
+  const params = getParams();
+  const keys   = Object.keys(params);
+  if (keys.length < 2) { alert(L.errMin2P); return; }
+  for (const [k, v] of Object.entries(params))
+    if (v.length < 2) { alert(L.errMin2V(k)); return; }
+
+  const btn = document.getElementById('btn-gen');
+  btn.disabled = true; btn.textContent = L.genLoading;
+
+  setTimeout(() => {
+    try {
+      const { testCases, totalPairs } = generatePairwise(params);
+      lastResult = testCases; lastParams = params;
+
+      let exhaustive = 1;
+      for (const v of Object.values(params)) exhaustive *= v.length;
+      const pct = Math.round((1 - testCases.length / exhaustive) * 100);
+
+      // Stats
+      document.getElementById('st-exhaustive').textContent = exhaustive;
+      document.getElementById('st-pairwise').textContent   = testCases.length;
+      document.getElementById('st-pairs').textContent      = totalPairs;
+      const badge = document.getElementById('st-saving');
+      badge.textContent  = L.saving(pct);
+      badge.dataset.pct  = pct;
+      document.getElementById('stats-bar').classList.add('visible');
+
+      // Table
+      const headers = Object.keys(params);
+      document.getElementById('result-thead').innerHTML =
+        '<tr><th>#</th>' + headers.map(h=>`<th>${h}</th>`).join('') + '</tr>';
+      document.getElementById('result-tbody').innerHTML =
+        testCases.map((tc,i) =>
+          `<tr><td>${i+1}</td>${headers.map(h=>`<td>${tc[h]}</td>`).join('')}</tr>`
+        ).join('');
+
+      // Verify
+      const missing = verifyPairwise(testCases, params);
+      const vb = document.getElementById('verify-box');
+      if (missing.length === 0) {
+        vb.dataset.ok = 'true';
+        vb.dataset.n  = totalPairs;
+        vb.dataset.ex = exhaustive;
+        vb.dataset.pw = testCases.length;
+        vb.innerHTML  = `<span style="color:var(--green);font-weight:600">${L.verifyOk(totalPairs,exhaustive,testCases.length)}</span>`;
+      } else {
+        vb.dataset.ok = 'false';
+        vb.innerHTML  = `<span style="color:var(--red)">${L.verifyFail(missing.join(', '))}</span>`;
+      }
+
+      document.getElementById('result-area').classList.add('visible');
+      document.getElementById('empty-state').style.display = 'none';
+    } catch(e) { alert('Error: ' + e.message); }
+    btn.disabled = false; btn.textContent = L.genBtn;
+  }, 10);
+}
+
+// ══════════════════════════════════════════════════════
+//  EXPORT
+// ══════════════════════════════════════════════════════
+function exportCSV() {
+  if (!lastResult.length) return;
+  const h = Object.keys(lastParams);
+  const rows = [['#',...h].join(','), ...lastResult.map((tc,i)=>[i+1,...h.map(k=>`"${tc[k]}"`)].join(','))];
+  dl('pairwise_test_cases.csv', rows.join('\n'), 'text/csv');
+}
+
+function copyTable() {
+  if (!lastResult.length) return;
+  const h = Object.keys(lastParams);
+  const rows = [['#',...h].join('\t'), ...lastResult.map((tc,i)=>[i+1,...h.map(k=>tc[k])].join('\t'))];
+  navigator.clipboard.writeText(rows.join('\n')).then(()=>toast(I18N[currentLang].copied));
+}
+
+function exportPICT() {
+  if (!Object.keys(lastParams).length) return;
+  const lines = Object.entries(lastParams).map(([k,v])=>`${k}: ${v.join(', ')}`);
+  dl('test.model', lines.join('\n'), 'text/plain');
+}
+
+function dl(name, content, type) {
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(new Blob([content],{type}));
+  a.download = name; a.click();
+}
+
+function toast(msg) {
+  const t = document.createElement('div');
+  t.className = 'toast'; t.textContent = msg;
+  document.body.appendChild(t);
+  setTimeout(()=>t.remove(), 2600);
+}
+
+// ══════════════════════════════════════════════════════
+//  INIT
+// ══════════════════════════════════════════════════════
+renderUI();
+addParam('','');
+addParam('','');
+</script>
+</body>
+</html>
